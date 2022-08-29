@@ -3,20 +3,22 @@
 find(<):
     [select 'Environment'] = sel
 
-sel -> 'Mangage Environment'
+sel -> 'Manage Environment'
 
 find(<):
-    [icon] [label 'New'] = newLabel
+    [img] [label 'New'] = newLabel
 
 newLabel -> click
+
 }
 
 ::: modal_layout {
+
 find: 
     [input] = envName
     [input] = host
-    [input] = name [input] = value [input] = desc [icon] 
-    [button 'Save'] = save
+    [input] = name [input] = value [input] = desc [img]
+    [button 'Save']=save
 }
 
 ::: add_data {
@@ -29,7 +31,7 @@ desc -> '{$3}'
 
 --- add case
 
-goto 'http://localhost:4200'
+goto 'https://www.eoapi.io/en'
 
 --- env_manage
 
@@ -57,7 +59,7 @@ find:
 
 --- del case
 
-goto 'http://localhost:4200'
+goto 'https://www.eoapi.io/en'
 
 --- env_manage
 
@@ -68,18 +70,29 @@ host -> 'https://youtube.com'
 
 --- add_data :a:b:c
 
+# 保存
 save -> click
-sel -> hover
+
+sel -> 'myEnv'
 
 find: 
-    [label 'myEnv'] [icon] = del_icon
-icon -> click
+    [label 'New']
+    [label 'myEnv'] = env
+
+env -> hover
 
 find: 
-    [label 'Cancel'] [label 'OK']=OK
+    [label 'New']
+    [label 'myEnv'] [img] = delIcon
+
+delIcon -> click
+
+find: 
+    [label 'Cancel'] [label 'OK']=ok
+    
 ok -> click
 
 find: (!)
     [label 'myEnv']
 
-
+capture

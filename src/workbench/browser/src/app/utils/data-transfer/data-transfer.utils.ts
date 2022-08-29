@@ -96,7 +96,7 @@ export const xml2json = (tmpl) => {
   let index = null;
   while (xml) {
     // * handle end tags
-    if (xml.trim().substring(0, 2) === '</') {
+    if (xml.substring(0, 2) === '</') {
       const end = xml.match(endTag);
       const [str, label] = end;
       const last = stack.pop();
@@ -110,7 +110,7 @@ export const xml2json = (tmpl) => {
         parent.children.push(last);
         stack.push(parent);
       }
-      xml = xml.trim().substring(str.length);
+      xml = xml.trim().substring(str.length).trim();
       continue;
     }
     // * handle start tags
@@ -157,8 +157,8 @@ export const xml2json = (tmpl) => {
 };
 
 type uiData = {
-  textType: ApiBodyType | string;
-  rootType: JsonRootType | string;
+  textType: ApiBodyType;
+  rootType: JsonRootType;
   data: ApiEditBody | any;
 };
 
@@ -236,12 +236,12 @@ export const json2XML: (o: object, tab?) => string = (o, tab) => {
  */
 export const text2UiData: (text: string) => uiData = (text) => {
   const result: uiData = {
-    textType: 'raw',
-    rootType: 'object',
+    textType: ApiBodyType.Raw,
+    rootType: JsonRootType.Object,
     data: text,
   };
   const textType = whatTextType(text);
-  result.textType = ['xml', 'json'].includes(textType) ? textType : 'raw';
+  result.textType = ['xml', 'json'].includes(textType) ? (textType as ApiBodyType) : ApiBodyType.Raw;
   switch (result.textType) {
     case 'xml': {
       result.data = xml2UiData(text);
@@ -249,13 +249,8 @@ export const text2UiData: (text: string) => uiData = (text) => {
       break;
     }
     case 'json': {
-      try {
-        result.data = JSON.parse(result.data);
-        result.data = flatData(Object.keys(result.data).map((it) => parseTree(it, result.data[it])));
-      } catch (error) {
-        console.error('text2UiData', error);
-        result.textType = 'raw';
-      }
+      result.data = JSON.parse(result.data);
+      result.data = flatData(Object.keys(result.data).map((it) => parseTree(it, result.data[it])));
       break;
     }
     default: {
@@ -275,7 +270,7 @@ export const text2UiData: (text: string) => uiData = (text) => {
  */
 export const uiData2Json = function (eoapiArr: ApiEditBody[], inputOptions) {
   inputOptions = inputOptions || {};
-  const result = {};
+  let result = {};
   const loopFun = (inputArr, inputObject) => {
     if (inputOptions.checkXmlAttr) {
       inputObject['@eo_attr'] = inputObject['@eo_attr'] || {};
@@ -287,10 +282,9 @@ export const uiData2Json = function (eoapiArr: ApiEditBody[], inputOptions) {
       if (!val.required && !inputOptions.ignoreCheckbox) {
         continue;
       }
-      const tmpKey = val.nameHtml || val.name;
+      const tmpKey = val.name;
       if (inputOptions.checkXmlAttr) {
         if (val.isErrorXmlAttr) {
-          // $rootScope.InfoModal('请填写正确格式的XML属性列表再进行转换', 'warning');
           throw new Error('errorXmlAttr');
         }
         if (inputObject['@eo_attr'].hasOwnProperty(tmpKey)) {
@@ -302,45 +296,15 @@ export const uiData2Json = function (eoapiArr: ApiEditBody[], inputOptions) {
           inputObject['@eo_attr'][tmpKey] = (val.attribute || '').replace(/\s+/, ' ');
         }
       }
-      if (inputOptions.defaultValueKey) {
-        inputObject[tmpKey] = val[inputOptions.defaultValueKey];
-      } else {
-        inputObject[tmpKey] = val.paramInfo;
-      }
+      inputObject[tmpKey] = val.example;
       if (val.children && val.children.length > 0) {
         switch (val.type) {
           case 'array': {
-            const tmp_child_zero_item = val.children[0];
-            if (tmp_child_zero_item.isArrItem) {
-              // 判断是否为新数组格式
-              if (inputOptions.checkXmlAttr) {
-                inputObject['@eo_attr'][tmpKey] = [];
-              }
-              inputObject[tmpKey] = [];
-              val.children.forEach((tmp_arr_item) => {
-                if (!(tmp_arr_item.checkbox || tmp_arr_item.paramNotNull || inputOptions.ignoreCheckbox)) {
-                  return;
-                }
-                if (inputOptions.checkXmlAttr) {
-                  const tmp_attr = typeof tmp_arr_item.attribute === 'string' ? tmp_arr_item.attribute : '';
-                  inputObject['@eo_attr'][tmpKey].push(tmp_attr.replace(/\s+/, ' '));
-                }
-                let tmp_result_arr_item = {};
-                if (tmp_arr_item.type === 'array' || !(tmp_arr_item.children && tmp_arr_item.children.length > 0)) {
-                  loopFun([tmp_arr_item], tmp_result_arr_item);
-                  tmp_result_arr_item = tmp_result_arr_item[tmp_arr_item.nameHtml || tmp_arr_item.name];
-                } else {
-                  loopFun(tmp_arr_item.children, tmp_result_arr_item);
-                }
-                inputObject[tmpKey].push(tmp_result_arr_item);
-              });
-            } else {
-              if (inputOptions.checkXmlAttr) {
-                inputObject['@eo_attr'][tmpKey] = [inputObject['@eo_attr'][tmpKey]];
-              }
-              inputObject[tmpKey] = [{}];
-              loopFun(val.children, inputObject[tmpKey][0]);
+            if (inputOptions.checkXmlAttr) {
+              inputObject['@eo_attr'][tmpKey] = [inputObject['@eo_attr'][tmpKey]];
             }
+            inputObject[tmpKey] = [{}];
+            loopFun(val.children, inputObject[tmpKey][0]);
             break;
           }
           default: {
@@ -379,5 +343,8 @@ export const uiData2Json = function (eoapiArr: ApiEditBody[], inputOptions) {
     }
   };
   loopFun(eoapiArr, result);
+  if (inputOptions.rootType === JsonRootType.Array) {
+    result = [result];
+  }
   return result;
 };
