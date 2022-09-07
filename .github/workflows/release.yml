@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
-
+    branches:
+      - test/relese
 jobs:
   release:
     name: build and release electron app
