@@ -13,14 +13,32 @@ import { UnitWorkerModule } from '../../workbench/node/electron/main';
 import Configuration from '../../platform/node/configuration/lib';
 import { ConfigurationInterface } from 'src/platform/node/configuration';
 import { MockServer } from 'eo/platform/node/mock-server';
+import socket from '../../workbench/node/server/socketio';
 import { LanguageService } from 'eo/app/electron-main/language.service';
 
 export const subView = {
   appView: null,
   mainView: null,
 };
+
+// 获取单实例锁
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  // 如果获取失败，说明已经有实例在运行了，直接退出
+  app.quit();
+}
+const PROTOCOL = 'eoapi';
+// app.setAsDefaultProtocolClient(PROTOCOL); // 注册协议
+if (app.isPackaged) {
+  app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, ['--']);
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1]), '--']);
+}
+
 const eoUpdater = new EoUpdater();
 const mockServer = new MockServer();
+// * start SocketIO
+socket();
 const moduleManager: ModuleManagerInterface = new ModuleManager();
 const configuration: ConfigurationInterface = Configuration();
 global.shareObject = {
@@ -92,6 +110,7 @@ class EoBrowserWindow {
         contextIsolation: false, // false if you want to run e2e test with Spectron
       },
     });
+
     proxyOpenExternal(this.win);
     this.loadURL();
     this.startMock();
@@ -191,60 +210,63 @@ try {
     }
   });
   // 这里可以封装成类+方法匹配调用，不用多个if else
-  ipcMain.on('eo-sync', async (event, arg) => {
-    let returnValue: any;
-    if (arg.action === 'getApiAccessRules') {
-      // 后期加入权限生成，根据moduleID，上层moduleID，应用范围等
-      // 或者是像Android, 跳出权限列表让用户自己选择确认放开的权限。
-      const output: string[] = ['getModules', 'getAppModuleList', 'getSlideModuleList', 'hook'];
-      returnValue = output;
-    } else if (arg.action === 'getModules') {
-      returnValue = moduleManager.getModules(true);
-    } else if (arg.action === 'getModule') {
-      returnValue = moduleManager.getModule(arg.data.moduleID);
-    } else if (arg.action === 'getAppModuleList') {
-      returnValue = moduleManager.getAppModuleList();
-    } else if (arg.action === 'installModule') {
-      const data = await moduleManager.installExt(arg.data);
-      if (data.code === 0) {
-        //subView.mainView.view.webContents.send('moduleUpdate');
+  ['on', 'handle'].forEach((eventName) =>
+    ipcMain[eventName]('eo-sync', async (event, arg) => {
+      let returnValue: any;
+      if (arg.action === 'getApiAccessRules') {
+        // 后期加入权限生成，根据moduleID，上层moduleID，应用范围等
+        // 或者是像Android, 跳出权限列表让用户自己选择确认放开的权限。
+        const output: string[] = ['getModules', 'getAppModuleList', 'getSlideModuleList', 'hook'];
+        returnValue = output;
+      } else if (arg.action === 'getModules') {
+        returnValue = moduleManager.getModules(true);
+      } else if (arg.action === 'getModule') {
+        returnValue = moduleManager.getModule(arg.data.moduleID);
+      } else if (arg.action === 'getAppModuleList') {
+        returnValue = moduleManager.getAppModuleList();
+      } else if (arg.action === 'installModule') {
+        const data = await moduleManager.installExt(arg.data);
+        if (data.code === 0) {
+          //subView.mainView.view.webContents.send('moduleUpdate');
+        }
+        returnValue = Object.assign(data, { modules: moduleManager.getModules() });
+      } else if (arg.action === 'uninstallModule') {
+        const data = await moduleManager.uninstall(arg.data);
+        if (data.code === 0) {
+          // subView.mainView.view.webContents.send('moduleUpdate');
+        }
+        returnValue = Object.assign(data, { modules: moduleManager.getModules() });
+      } else if (arg.action === 'getSideModuleList') {
+        returnValue = moduleManager.getSideModuleList(subView.appView?.mainModuleID || 'default');
+      } else if (arg.action === 'getFeatures') {
+        returnValue = moduleManager.getFeatures();
+      } else if (arg.action === 'getFeature') {
+        returnValue = moduleManager.getFeature(arg.data.featureKey);
+      } else if (arg.action === 'saveSettings') {
+        returnValue = configuration.saveSettings(arg.data);
+      } else if (arg.action === 'saveModuleSettings') {
+        returnValue = configuration.saveModuleSettings(arg.data.moduleID, arg.data.settings);
+      } else if (arg.action === 'deleteModuleSettings') {
+        returnValue = configuration.deleteModuleSettings(arg.data.moduleID);
+      } else if (arg.action === 'getSettings') {
+        returnValue = configuration.getSettings();
+      } else if (arg.action === 'getModuleSettings') {
+        returnValue = configuration.getModuleSettings(arg.data.moduleID);
+      } else if (arg.action === 'getSidePosition') {
+        returnValue = subView.appView?.sidePosition;
+        // 获取mock服务地址
+      } else if (arg.action === 'getMockUrl') {
+        returnValue = mockServer.getMockUrl();
+        // 重置并初始化mock路由
+      } else if (arg.action === 'hook') {
+        returnValue = 'hook返回';
+      } else {
+        returnValue = 'Invalid data';
       }
-      returnValue = Object.assign(data, { modules: moduleManager.getModules() });
-    } else if (arg.action === 'uninstallModule') {
-      const data = await moduleManager.uninstall(arg.data);
-      if (data.code === 0) {
-        // subView.mainView.view.webContents.send('moduleUpdate');
-      }
-      returnValue = Object.assign(data, { modules: moduleManager.getModules() });
-    } else if (arg.action === 'getSideModuleList') {
-      returnValue = moduleManager.getSideModuleList(subView.appView?.mainModuleID || 'default');
-    } else if (arg.action === 'getFeatures') {
-      returnValue = moduleManager.getFeatures();
-    } else if (arg.action === 'getFeature') {
-      returnValue = moduleManager.getFeature(arg.data.featureKey);
-    } else if (arg.action === 'saveSettings') {
-      returnValue = configuration.saveSettings(arg.data);
-    } else if (arg.action === 'saveModuleSettings') {
-      returnValue = configuration.saveModuleSettings(arg.data.moduleID, arg.data.settings);
-    } else if (arg.action === 'deleteModuleSettings') {
-      returnValue = configuration.deleteModuleSettings(arg.data.moduleID);
-    } else if (arg.action === 'getSettings') {
-      returnValue = configuration.getSettings();
-    } else if (arg.action === 'getModuleSettings') {
-      returnValue = configuration.getModuleSettings(arg.data.moduleID);
-    } else if (arg.action === 'getSidePosition') {
-      returnValue = subView.appView?.sidePosition;
-      // 获取mock服务地址
-    } else if (arg.action === 'getMockUrl') {
-      returnValue = mockServer.getMockUrl();
-      // 重置并初始化mock路由
-    } else if (arg.action === 'hook') {
-      returnValue = 'hook返回';
-    } else {
-      returnValue = 'Invalid data';
-    }
-    event.returnValue = returnValue;
-  });
+      event.returnValue = returnValue;
+      return returnValue;
+    })
+  );
   ipcMain.on('get-system-info', (event) => {
     const systemInfo = {
       homeDir: path.dirname(app.getPath('exe')),

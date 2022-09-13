@@ -48,7 +48,7 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
     this.setCode(val);
   }
   /** Scroll bars appear over 20 lines */
-  @Input() maxLine = 200;
+  @Input() maxLine: number;
   @Input() config: JoinedEditorOptions = {};
   @Input() editorType = 'json';
   @Input() autoFormat = false;
@@ -112,7 +112,7 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
 
   ngAfterViewInit(): void {
     // console.log('codeEdtor', this.codeEdtor);
-    requestIdleCallback(() => this.rerenderEditor());
+    requestAnimationFrame(() => this.rerenderEditor());
     if (this.editorOption.automaticLayout === undefined) {
       this.resizeObserver = new ResizeObserver(
         debounce(() => {
@@ -131,7 +131,7 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
   async ngOnChanges() {
     // * update root type
     if (this.eventList.includes('type') && !this.hiddenList.includes('type')) {
-      requestIdleCallback(() => {
+      requestAnimationFrame(() => {
         const type = whatTextType(this.$$code || '');
         this.editorType = type;
         window.monaco?.editor.setModelLanguage(this.codeEdtor.getModel(), type);
@@ -175,44 +175,45 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
 
     let code = '';
     try {
-      code = typeof val === 'string' ? val : JSON.stringify(val);
+      code = JSON.stringify(typeof val === 'string' ? JSON.parse(val) : val, null, 4);
     } catch {
       code = String(val);
     }
 
-    if (code && this.isFirstFormat && this.autoFormat) {
-      requestAnimationFrame(async () => {
+    if (code && (this.config?.readOnly || (this.isFirstFormat && this.autoFormat))) {
+      (async () => {
         this.$$code = await this.formatCode();
         this.isFirstFormat = false;
-      });
+      })();
     }
-
     this.$$code = code;
   }
 
   private initMonacoEditorEvent() {
-    this.completionItemProvider = window.monaco.languages.registerCompletionItemProvider('javascript', {
-      provideCompletionItems: (model, position) => {
-        // find out if we are completing a property in the 'dependencies' object.
-        const textUntilPosition = model.getValueInRange({
-          startLineNumber: 1,
-          startColumn: 1,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column,
-        });
+    if (this.completions?.length) {
+      this.completionItemProvider = window.monaco.languages.registerCompletionItemProvider('javascript', {
+        provideCompletionItems: (model, position) => {
+          // find out if we are completing a property in the 'dependencies' object.
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
 
-        const word = model.getWordUntilPosition(position);
-        const range = {
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
-        };
-        return {
-          suggestions: this.completions.map((n) => ({ ...n, range })),
-        } as any;
-      },
-    });
+          const word = model.getWordUntilPosition(position);
+          const range = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn,
+          };
+          return {
+            suggestions: this.completions.map((n) => ({ ...n, range })),
+          } as any;
+        },
+      });
+    }
 
     this.codeEdtor.onDidChangeModelDecorations(() => {
       updateEditorHeight(); // typing
@@ -230,20 +231,22 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
     let prevHeight = 0;
 
     const updateEditorHeight = () => {
-      const editorElement = this.codeEdtor.getDomNode();
+      if (this.maxLine) {
+        const editorElement = this.codeEdtor.getDomNode();
 
-      if (!editorElement) {
-        return;
-      }
+        if (!editorElement) {
+          return;
+        }
 
-      const lineHeight = this.codeEdtor.getOption(editor.EditorOption.lineHeight);
-      const lineCount = this.codeEdtor.getModel()?.getLineCount() || 1;
-      const height = this.codeEdtor.getTopForLineNumber(Math.min(lineCount, this.maxLine)) + lineHeight;
+        const lineHeight = this.codeEdtor.getOption(editor.EditorOption.lineHeight);
+        const lineCount = this.codeEdtor.getModel()?.getLineCount() || 1;
+        const height = this.codeEdtor.getTopForLineNumber(Math.min(lineCount, this.maxLine)) + lineHeight;
 
-      if (prevHeight !== height) {
-        prevHeight = height;
-        editorElement.style.height = `${height}px`;
-        this.codeEdtor.layout();
+        if (prevHeight !== height) {
+          prevHeight = height;
+          editorElement.style.height = `${height}px`;
+          this.codeEdtor.layout();
+        }
       }
     };
   }
@@ -265,7 +268,7 @@ export class EoMonacoEditorComponent implements AfterViewInit, OnInit, OnChanges
   };
   formatCode() {
     return new Promise<string>((resolve) => {
-      requestIdleCallback(async () => {
+      requestAnimationFrame(async () => {
         this.codeEdtor?.updateOptions({ readOnly: false });
         await this.codeEdtor?.getAction('editor.action.formatDocument')?.run();
         this.codeEdtor?.updateOptions({ readOnly: this.config.readOnly });

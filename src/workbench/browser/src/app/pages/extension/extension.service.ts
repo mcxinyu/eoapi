@@ -6,12 +6,14 @@ import { ModuleInfo } from 'eo/platform/node/extension-manager/types/index';
 import { TranslateService } from 'eo/platform/common/i18n';
 import { LanguageService } from 'eo/workbench/browser/src/app/core/services/language/language.service';
 import { APP_CONFIG } from 'eo/workbench/browser/src/environments/environment';
+import { DISABLE_EXTENSION_NAMES } from 'eo/workbench/browser/src/app/shared/constant/storageKeys';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExtensionService {
   ignoreList = ['default'];
+  disabledExtensionNames: string[] = this.getExtensionNames();
   extensionIDs: Array<string> = [];
   HOST = '';
   localExtensions: Map<string, ModuleInfo>;
@@ -27,6 +29,10 @@ export class ExtensionService {
   getInstalledList() {
     // Local extension exception for ignore list
     return Array.from(this.localExtensions.values()).filter((it) => this.extensionIDs.includes(it.moduleID));
+  }
+  isInstalled(name) {
+    const installList = this.getInstalledList();
+    return installList.includes(name);
   }
   private translateModule(module: ModuleInfo) {
     const lang = this.language.systemLanguage;
@@ -64,28 +70,55 @@ export class ExtensionService {
    * @param id
    * @returns if install success
    */
-  install(id): boolean {
+  async install(id): Promise<boolean> {
     console.log('Install module:', id);
-    const { code, data, modules } = window.eo.installModule(id);
+    const { code, data, modules } = await window.eo.installModule(id);
     if (code === 0) {
       this.localExtensions = modules;
-      this.updateExtensionIDs();
+      this.extensionIDs = this.updateExtensionIDs();
       return true;
     }
     console.error(data);
     return false;
   }
-  uninstall(id): boolean {
-    console.log('Install module:', id);
-    const { code, data, modules } = window.eo.uninstallModule(id);
+  async uninstall(id): Promise<boolean> {
+    console.log('Uninstall module:', id);
+    const { code, data, modules } = await window.eo.uninstallModule(id);
     if (code === 0) {
       this.localExtensions = modules;
-      this.updateExtensionIDs();
+      this.extensionIDs = this.updateExtensionIDs();
       return true;
     }
     console.error(data);
     return false;
   }
+
+  isEnable(name: string) {
+    return !this.disabledExtensionNames.includes(name);
+  }
+
+  enableExtension(names: string | string[]) {
+    const enableNames = Array().concat(names) as string[];
+    this.setExtension(this.disabledExtensionNames.filter((n) => !enableNames.includes(n)));
+  }
+
+  disableExtension(names: string | string[]) {
+    this.setExtension([...new Set(this.disabledExtensionNames.concat(names))]);
+  }
+
+  setExtension(arr: string[]) {
+    localStorage.setItem(DISABLE_EXTENSION_NAMES, JSON.stringify(arr));
+    this.disabledExtensionNames = arr;
+  }
+
+  getExtensionNames() {
+    try {
+      return (this.disabledExtensionNames = JSON.parse(localStorage.getItem(DISABLE_EXTENSION_NAMES) || '[]'));
+    } catch (error) {
+      return [];
+    }
+  }
+
   private async requestDetail(id) {
     return await lastValueFrom(this.http.get(`${this.HOST}/detail/${id}?locale=${this.language.systemLanguage}`)).catch(
       (err) => [0, err]

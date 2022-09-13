@@ -8,6 +8,7 @@ const _LibsCommon = require('../request/libs/common.js');
 const koaBody = require('koa-body');
 const Koa = require('koa');
 const cors = require('@koa/cors');
+const socketio = require('./socketio');
 
 const app = new Koa();
 const port = 4201;
@@ -24,7 +25,7 @@ app.use(async (ctx, next) => {
     case '/api/unit': {
       let reqJSON = ctx.request.body.data;
       reqJSON.env = _LibsCommon.parseEnv(reqJSON.env);
-      await new _LibsFlowCommon.core().main(reqJSON).then(({ globals,report, history }) => {
+      await new _LibsFlowCommon.core().main(reqJSON).then(({ globals, report, history }) => {
         ['general', 'requestInfo', 'resultInfo'].forEach((keyName) => {
           if (typeof history[keyName] === 'string') history[keyName] = JSON.parse(history[keyName]);
         });
@@ -34,7 +35,7 @@ app.use(async (ctx, next) => {
             id: ctx.request.body.id,
             report: report,
             history: history,
-            globals:globals
+            globals: globals,
           },
         });
       });
@@ -44,4 +45,5 @@ app.use(async (ctx, next) => {
   next();
 });
 
+socketio();
 app.listen(port);

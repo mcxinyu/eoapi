@@ -6,6 +6,7 @@ import { ApiTabStorageService } from 'eo/workbench/browser/src/app/pages/api/tab
 import { TabItem, TabOperate } from 'eo/workbench/browser/src/app/pages/api/tab/tab.model';
 import { ModalService } from '../../../shared/services/modal.service';
 import { KeyValue } from '@angular/common';
+import { NzTabsCanDeactivateFn } from 'ng-zorro-antd/tabs';
 @Component({
   selector: 'eo-api-tab',
   templateUrl: './api-tab.component.html',
@@ -14,10 +15,10 @@ import { KeyValue } from '@angular/common';
 export class ApiTabComponent implements OnInit, OnDestroy {
   @Input() list: Partial<TabItem>[];
   @Input() handleDataBeforeCache;
+  @Input() checkTabCanLeave;
   @Output() beforeClose = new EventEmitter<boolean>();
   MAX_TAB_LIMIT = 15;
   routerSubscribe: Subscription;
-  // private destroy$: Subject<void> = new Subject<void>();
   constructor(
     public tabStorage: ApiTabStorageService,
     public tabOperate: ApiTabOperateService,
@@ -30,24 +31,36 @@ export class ApiTabComponent implements OnInit, OnDestroy {
     this.watchRouterChange();
     this.watchPageLeave();
   }
-  newTab() {
+  async newTab(key = undefined) {
+    if (this.checkTabCanLeave && !(await this.checkTabCanLeave())) {
+      return false;
+    }
     if (this.tabStorage.tabOrder.length >= this.MAX_TAB_LIMIT) {
       return;
     }
-    this.tabOperate.newDefaultTab();
+    this.tabOperate.newDefaultTab(key);
   }
   sortTab(_left: KeyValue<number, any>, _right: KeyValue<number, any>): number {
     const leftIndex = this.tabStorage.tabOrder.findIndex((uuid) => uuid === _left.key);
     const rightIndex = this.tabStorage.tabOrder.findIndex((uuid) => uuid === _right.key);
     return leftIndex - rightIndex;
   }
+  canDeactivate: NzTabsCanDeactivateFn = async (fromIndex: number, toIndex: number) => {
+    if (this.checkTabCanLeave && !(await this.checkTabCanLeave())) {
+      return false;
+    }
+    return true;
+  };
   /**
    * Select tab
    */
-  selectChange() {
+  selectChange($event) {
     this.tabOperate.navigateTabRoute(this.getCurrentTab());
   }
-  closeTab({ $event, index, tab }: { $event: Event; index: number; tab: any }) {
+  async closeTab({ $event, index, tab }: { $event: Event; index: number; tab: any }) {
+    if (this.checkTabCanLeave && !(await this.checkTabCanLeave())) {
+      return;
+    }
     $event.stopPropagation();
     if (!tab.hasChanged) {
       this.tabOperate.closeTab(index);
@@ -86,7 +99,7 @@ export class ApiTabComponent implements OnInit, OnDestroy {
   }
   //Quick see tabs change in templete,for debug,can be deleted
   //! just for debug
-  private getConsoleTabs() {
+  getConsoleTabs() {
     const tabs = [];
     this.tabStorage.tabOrder.forEach((uuid) => {
       const tab = this.tabStorage.tabsByID.get(uuid);
@@ -116,7 +129,7 @@ export class ApiTabComponent implements OnInit, OnDestroy {
    * @returns
    */
   getExistTabByUrl(url: string): TabItem | null {
-    const existTab = this.tabOperate.getSameContentTab(this.tabOperate.getTabInfoFromUrl(url));
+    const existTab = this.tabOperate.getSameContentTab(this.tabOperate.getBasicInfoFromUrl(url));
     if (!existTab) {
       return null;
     }
@@ -148,8 +161,6 @@ export class ApiTabComponent implements OnInit, OnDestroy {
         extends: Object.assign({}, existTab.extends, tabItem.extends),
       })
     );
-    //! Prevent rendering delay
-    // this.cdRef.detectChanges();
   }
   /**
    * Cache tab header/tabs content for restore when page close or component destroy
@@ -180,7 +191,7 @@ export class ApiTabComponent implements OnInit, OnDestroy {
   }
   private watchPageLeave() {
     const that = this;
-    window.addEventListener('beforeunload', function(e) {
+    window.addEventListener('beforeunload', function (e) {
       that.cacheData();
     });
   }

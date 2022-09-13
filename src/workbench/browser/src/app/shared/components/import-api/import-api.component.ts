@@ -4,6 +4,7 @@ import { EoMessageService } from 'eo/workbench/browser/src/app/eoui/message/eo-m
 import { MessageService } from 'eo/workbench/browser/src/app/shared/services/message/message.service';
 import { StorageService } from 'eo/workbench/browser/src/app/shared/services/storage';
 import { StorageRes, StorageResStatus } from 'eo/workbench/browser/src/app/shared/services/storage/index.model';
+import { ExtensionService } from 'eo/workbench/browser/src/app/pages/extension/extension.service';
 
 // const optionList = [
 //   {
@@ -53,14 +54,17 @@ export class ImportApiComponent implements OnInit {
   constructor(
     private messageService: MessageService,
     private storage: StorageService,
-    private eoMessage: EoMessageService
+    private eoMessage: EoMessageService,
+    public extensionService: ExtensionService
   ) {}
   ngOnInit(): void {
     this.featureMap?.forEach((data: FeatureType, key: string) => {
-      this.supportList.push({
-        key,
-        ...data,
-      });
+      if (this.extensionService.isEnable(data.name)) {
+        this.supportList.push({
+          key,
+          ...data,
+        });
+      }
     });
     {
       const { key } = this.supportList.at(0);
@@ -71,8 +75,8 @@ export class ImportApiComponent implements OnInit {
     this.uploadData = data;
   }
   async submit(callback) {
-    if(!this.uploadData){
-      this.eoMessage.error($localize `Please import the file first`);
+    if (!this.uploadData) {
+      this.eoMessage.error($localize`Please import the file first`);
       return;
     }
     // * this.currentExtension is extension's key, like 'eoapi-import-openapi'
@@ -86,12 +90,12 @@ export class ImportApiComponent implements OnInit {
       callback(false);
       return;
     }
-    console.log(data);
+    console.log(JSON.parse(JSON.stringify(data)));
     this.storage.run('projectImport', [1, data], (result: StorageRes) => {
       if (result.status === StorageResStatus.success) {
         this.messageService.send({
           type: 'importSuccess',
-          data: { },
+          data: {},
         });
       }
     });

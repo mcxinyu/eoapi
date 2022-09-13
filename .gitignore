@@ -14,11 +14,10 @@ out/
 !src/workbench/node/request/**/*.js
 !src/workbench/node/server/**/*.js
 !/api/*.js
-!/build/*.js
+!/scripts/*.js
 !*.config.js
 !upload.js
 
-scripts/notarize.js
 # dependencies
 node_modules
 # package-lock.json
@@ -43,6 +42,7 @@ testem.log
 
 # e2e
 /e2e/test
+/e2e/imgs
 !/e2e/protractor.conf.js
 /e2e/*.map
 /e2e/tracing

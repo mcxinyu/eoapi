@@ -1,4 +1,5 @@
 import express from 'express';
+
 import type { Response } from 'express';
 import portfinder from 'portfinder';
 // import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -25,6 +26,7 @@ const jsonStringify = (obj) => {
   cache = null; // Empty variables for easy recycling by garbage collection mechanisms
   return str;
 };
+
 export class MockServer {
   private app: ReturnType<typeof express>;
   private server: Server;
@@ -69,7 +71,6 @@ export class MockServer {
       if (req.query.mockID || isMatchType !== false) {
         this.view.webContents.send('getMockApiList', JSON.parse(jsonStringify(req)));
         ipcMain.once('getMockApiList', (event, message) => {
-          console.log('getMockApiList message', message);
           const { response = {}, statusCode = 200 } = message;
           res.statusCode = statusCode;
           if (res.statusCode === 404) {

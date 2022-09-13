@@ -10,6 +10,7 @@ import { form2json, parseTree, xml2UiData, isXML } from '../../../utils/data-tra
   styleUrls: ['./params-import.component.scss'],
 })
 export class ParamsImportComponent {
+  @Input() disabled: boolean;
   @Input() rootType: 'array' | string | 'object' = 'object';
   @Input() contentType = 'json';
   @Input() baseData: object[] = [];
@@ -27,7 +28,7 @@ export class ParamsImportComponent {
       case 'json':
         return 'JSON';
       case 'formData':
-        return '表单';
+        return `Form-data`;
       default:
         return '';
     }
@@ -127,7 +128,6 @@ export class ParamsImportComponent {
     }
     // * tree to array for table render
     const cacheData = flatData(Object.entries(paramCode).map(([key, value]) => parseTree(key, value)));
-    console.log(cacheData);
 
     // TODO delete useless attribute in cacheData
     switch (type) {

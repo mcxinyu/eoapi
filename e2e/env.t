@@ -31,7 +31,7 @@ desc -> '{$3}'
 
 --- add case
 
-goto 'https://www.eoapi.io/en'
+goto 'http://localhost:4200'
 
 --- env_manage
 
@@ -40,7 +40,7 @@ goto 'https://www.eoapi.io/en'
 envName -> 'myEnv'
 host -> 'https://youtube.com'
 
---- add_data :a:b:c
+--- add_data :a :b :c
 
 save -> click
 
@@ -59,7 +59,7 @@ find:
 
 --- del case
 
-goto 'https://www.eoapi.io/en'
+goto 'http://localhost:4200'
 
 --- env_manage
 
