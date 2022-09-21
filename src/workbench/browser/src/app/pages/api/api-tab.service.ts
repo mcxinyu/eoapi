@@ -148,6 +148,7 @@ export class ApiTabService {
     this.componentRef.initialModel = currentTab?.baseContent?.[contentID] || null;
     this.componentRef.init();
   }
+
   updateTab(currentTab, inData) {
     const model = inData.model;
     const contentID = currentTab.module;
@@ -166,7 +167,7 @@ export class ApiTabService {
       replaceTab.extends.method = model.method;
       if (currentTab.module === 'test') {
         if (currentTab.pathname === '/home/api/ws/test') {
-          replaceTab.extends.method = model.request.protocol.toUpperCase();
+          replaceTab.extends.method = model.request.protocol?.toUpperCase();
         } else {
           replaceTab.extends.method = model.request.method;
         }

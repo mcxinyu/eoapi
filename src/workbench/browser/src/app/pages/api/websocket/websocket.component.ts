@@ -12,6 +12,8 @@ import { ElectronService } from 'eo/workbench/browser/src/app/core/services';
 import { Subject, takeUntil } from 'rxjs';
 import { ModalService } from '../../../shared/services/modal.service';
 import { isEmptyObj } from 'eo/workbench/browser/src/app/utils';
+import { ApiParamsNumPipe } from '../../../shared/pipes/api-param-num.pipe';
+
 import { ApiTestHeaders, ApiTestQuery } from 'eo/workbench/browser/src/app/shared/services/api-test/api-test.model';
 interface testViewModel {
   requestTabIndex: number;
@@ -70,10 +72,11 @@ export class WebsocketComponent implements OnInit, OnDestroy {
         const historyData: unknown = await this.testService.getHistory(Number(id.replace('history_', '')));
         this.model = historyData as testViewModel;
       }
-      console.log(this.model);
+      // console.log(this.model);
     }
     this.watchBasicForm();
     this.eoOnInit.emit(this.model);
+    this.initBasicForm();
   }
   async ngOnInit() {
     // * 通过 SocketIO 通知后端
@@ -130,6 +133,7 @@ export class WebsocketComponent implements OnInit, OnDestroy {
     }
     this.modelChange.emit(this.model);
   }
+
   async handleConnect(bool = 'disconnect') {
     const isOK = this.checkForm();
     if (!isOK) {
@@ -180,6 +184,10 @@ export class WebsocketComponent implements OnInit, OnDestroy {
       this.socket.emit('ws-server', { type: 'ws-connect', content: data });
     }
     this.listen();
+  }
+
+  bindGetApiParamNum(params) {
+    return new ApiParamsNumPipe().transform(params);
   }
 
   handleSendMsg() {
@@ -246,7 +254,7 @@ export class WebsocketComponent implements OnInit, OnDestroy {
         } else {
           this.model.response.responseBody.unshift({
             type: 'end',
-            msg: `Disconnect by ${this.getLink()}`,
+            msg: `Error by ${this.getLink()}`,
             isExpand: false,
           });
           this.wsStatus = 'disconnect';
@@ -299,10 +307,10 @@ export class WebsocketComponent implements OnInit, OnDestroy {
     const link = /^(wss:\/{2})|(ws:\/{2})\S+$/m.test(uri.trim())
       ? uri.trim()
       : protocol + '://' + uri.trim().replace('//', '');
-    console.log('link', link);
+    // console.log('link', link);
     return link;
   }
-  private resetModel() {
+  private resetModel(): testViewModel {
     return {
       requestTabIndex: 2,
       protocol: 'websocket',
