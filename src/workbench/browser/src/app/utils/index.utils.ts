@@ -166,7 +166,7 @@ export function debounce(fn, wait = 50) {
   let timer = null;
   // 将 debounce 处理结果当作函数返回
   // 触发事件回调时执行这个返回函数
-  return function (...args) {
+  return function(...args) {
     // this保存给context
     const context = this;
     // 如果已经设定过定时器就清空上一次的定时器
@@ -183,7 +183,7 @@ export function debounce(fn, wait = 50) {
 
 export function throttle(fn, gap) {
   let timerId = null;
-  return function (...rest) {
+  return function(...rest) {
     if (timerId === null) {
       fn(...rest); // 立即执行
       timerId = setTimeout(() => {
@@ -232,17 +232,16 @@ export const eoDeepCopy = (obj) => {
     return copy;
   }
 
-  throw new Error("Unable to copy obj! Its type isn't supported.");
+  throw new Error('Unable to copy obj! Its type isn\'t supported.');
 };
-//判断是否为base64转码过的字符串
-const exg = new RegExp('^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$');
 
+// TODO 该方法不完善
 export function isBase64(str) {
   if (str === '' || str.trim() === '') {
     return false;
   }
   try {
-    return exg.test(str);
+    return window.btoa(window.atob(str)) === str;
   } catch (err) {
     return false;
   }

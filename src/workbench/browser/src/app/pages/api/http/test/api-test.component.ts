@@ -17,7 +17,7 @@ import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 
 import { TestServerService } from '../../../../shared/services/api-test/test-server.service';
 import { ApiTestUtilService } from './api-test-util.service';
-import { eoDeepCopy, isEmptyObj, objectToArray } from '../../../../utils';
+import { eoDeepCopy, isEmptyObj, objectToArray } from '../../../../utils/index.utils';
 
 import { EnvState } from '../../../../shared/store/env.state';
 import { ApiParamsNumPipe } from '../../../../shared/pipes/api-param-num.pipe';
@@ -104,6 +104,17 @@ export class ApiTestComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private lang: LanguageService
   ) {
+    //Select demo api when first open Eoapi
+    if (!window.localStorage.getItem('local_TabCache')) {
+      this.router.navigate(['/home/api/http/test'], {
+        queryParams: { pageID: Date.now(), uuid: 1 },
+      });
+      setTimeout(() => {
+        const testBtn = document.getElementById('btn-test');
+        testBtn && testBtn.click();
+      }, 600);
+    }
+
     this.initBasicForm();
     this.testServer.init((message) => {
       this.receiveMessage(message);
