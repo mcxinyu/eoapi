@@ -15,7 +15,7 @@ import { Component, OnInit } from '@angular/core'
       [nzFooter]="null"
       [(nzVisible)]="isInvateModalVisible"
       (nzOnCancel)="handleInvateModalCancel()"
-      (nzAfterClose)="eritvfsCallback()"
+      (nzAfterClose)="eh3xaplCallback()"
       nzTitle="Add people to the workspace"
       i18n-nzTitle
     >
@@ -32,8 +32,8 @@ import { Component, OnInit } from '@angular/core'
           class=""
           nzType="primary"
           nzBlock
-          (click)="btnrzdn15Callback()"
-          [disabled]="btn193ksdStatus()"
+          (click)="btnht99peCallback()"
+          [disabled]="btn0rvkkgStatus()"
           i18n
         >
           Select a member above
@@ -47,8 +47,8 @@ import { Component, OnInit } from '@angular/core'
           nz-button
           class=""
           nzType="primary"
-          (click)="btnkjotm1Callback()"
-          [disabled]="btnuk14mmStatus()"
+          (click)="btn9viqspCallback()"
+          [disabled]="btnkrflwgStatus()"
           i18n
         >
           Add people
@@ -57,7 +57,7 @@ import { Component, OnInit } from '@angular/core'
       <section class="py-5">
         <eo-manage-access
           [data]="memberList"
-          (eoOnRemove)="e006qnoCallback($event)"
+          (eoOnRemove)="eerei7cCallback($event)"
         ></eo-manage-access>
       </section>
     </section>`
@@ -115,11 +115,15 @@ export class MemberComponent implements OnInit {
     // * 关闭弹窗
     this.isInvateModalVisible = false
   }
-  async eritvfsCallback() {
+  async eh3xaplCallback() {
     // * nzAfterClose event callback
+    {
+      // * auto clear form
+      this.inputPersonValue = ''
+    }
     this.inputPersonValue = ''
   }
-  async btnrzdn15Callback() {
+  async btnht99peCallback() {
     // * click event callback
     const username = this.inputPersonValue
     const [uData, uErr]: any = await this.api.api_userSearch({ username })
@@ -181,17 +185,17 @@ export class MemberComponent implements OnInit {
     const Member = wData.filter((it) => it.roleName !== 'Owner')
     this.memberList = Owner.concat(Member)
   }
-  btn193ksdStatus() {
+  btn0rvkkgStatus() {
     // * disabled status status
     return this.inputPersonValue === ''
   }
-  async btnkjotm1Callback() {
+  async btn9viqspCallback() {
     // * click event callback
 
     // * 唤起弹窗
     this.isInvateModalVisible = true
   }
-  btnuk14mmStatus() {
+  btnkrflwgStatus() {
     // * disabled status status
     return
     return (
@@ -199,7 +203,7 @@ export class MemberComponent implements OnInit {
       this.workspace.authEnum.canEdit
     )
   }
-  async e006qnoCallback($event) {
+  async eerei7cCallback($event) {
     // * eoOnRemove event callback
 
     const confirm = () =>
