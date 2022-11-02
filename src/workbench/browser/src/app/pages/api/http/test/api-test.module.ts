@@ -27,7 +27,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ByteToStringPipe } from './result-response/get-size.pipe';
 
 import { TestServerService } from '../../../../shared/services/api-test/test-server.service';
-import { ElectronService } from 'eo/workbench/browser/src/app/core/services';
+import { ElectronService, WebService } from 'eo/workbench/browser/src/app/core/services';
 import { TestServerLocalNodeService } from 'eo/workbench/browser/src/app/shared/services/api-test/local-node/test-connect.service';
 import { TestServerServerlessService } from 'eo/workbench/browser/src/app/shared/services/api-test/serverless-node/test-connect.service';
 
@@ -44,6 +44,7 @@ import { TestServerRemoteService } from 'eo/workbench/browser/src/app/shared/ser
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { RouterModule } from '@angular/router';
 import { ApiSharedModule } from 'eo/workbench/browser/src/app/pages/api/api-shared.module';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 const NZ_COMPONETS = [
   NzDropDownModule,
@@ -63,7 +64,7 @@ const NZ_COMPONETS = [
   NzAlertModule,
   NzTypographyModule,
   NzUploadModule,
-  ApiSharedModule,
+  NzBadgeModule,
 ];
 const COMPONENTS = [
   ApiTestComponent,
@@ -89,6 +90,7 @@ const COMPONENTS = [
     CommonModule,
     ...NZ_COMPONETS,
     EouiModule,
+    ApiSharedModule,
     SharedModule,
     ParamsImportModule,
   ],
@@ -97,17 +99,16 @@ const COMPONENTS = [
     ApiTestService,
     {
       provide: TestServerService,
-      useFactory: (electron: ElectronService, locale) => {
-        const isVercel = window.location.href.includes('vercel') || window.location.host.includes('eoapi.io');
+      useFactory: (electron: ElectronService, web: WebService, locale) => {
         if (electron.isElectron) {
           return new TestServerLocalNodeService(electron, locale);
-        } else if (!isVercel) {
+        } else if (!web.isVercel) {
           return new TestServerRemoteService(locale);
         } else {
           return new TestServerServerlessService(locale);
         }
       },
-      deps: [ElectronService, LOCALE_ID],
+      deps: [ElectronService, WebService, LOCALE_ID],
     },
   ],
 })

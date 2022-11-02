@@ -3,12 +3,14 @@ import { ElectronService } from 'eo/workbench/browser/src/app/core/services';
 import { DownloadClienteComponent } from 'eo/workbench/browser/src/app/core/services/web/download-client.component';
 import { PROTOCOL } from 'eo/workbench/browser/src/app/shared/constants/protocol';
 import { ModalService } from 'eo/workbench/browser/src/app/shared/services/modal.service';
+import { SettingService } from 'eo/workbench/browser/src/app/core/services/settings/settings.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebService {
   isWeb = !this.electronService.isElectron;
+  isVercel = window.location.href.includes('vercel') || window.location.host.includes('eoapi.io');
   resourceInfo = [
     {
       id: 'win',
@@ -33,7 +35,14 @@ export class WebService {
       link: '',
     },
   ];
-  constructor(private modalService: ModalService, private electronService: ElectronService) {
+  constructor(
+    private modalService: ModalService,
+    private settingService: SettingService,
+    private electronService: ElectronService
+  ) {
+    if (this.isWeb) {
+      this.settingService.putSettings({ 'eoapi-common.remoteServer.url': window.location.origin });
+    }
     this.getClientResource();
   }
   private findLinkInSingleAssets(assets, item) {

@@ -1,16 +1,11 @@
-import { NzModalService } from 'ng-zorro-antd/modal'
-import { WorkspaceService } from 'eo/workbench/browser/src/app/shared/services/workspace/workspace.service'
-import { EoMessageService } from 'eo/workbench/browser/src/app/eoui/message/eo-message.service'
-import { UserService } from 'eo/workbench/browser/src/app/shared/services/user/user.service'
-import { MessageService } from 'eo/workbench/browser/src/app/shared/services/message/message.service'
-import { RemoteService } from 'eo/workbench/browser/src/app/shared/services/storage/remote.service'
-import {
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators
-} from '@angular/forms'
-import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { WorkspaceService } from 'eo/workbench/browser/src/app/shared/services/workspace/workspace.service';
+import { EoMessageService } from 'eo/workbench/browser/src/app/eoui/message/eo-message.service';
+import { UserService } from 'eo/workbench/browser/src/app/shared/services/user/user.service';
+import { MessageService } from 'eo/workbench/browser/src/app/shared/services/message/message.service';
+import { RemoteService } from 'eo/workbench/browser/src/app/shared/services/storage/remote.service';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'eo-workspace',
@@ -20,13 +15,7 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
     </h2>
     <section class="py-2"><eo-api-overview></eo-api-overview></section>
     <nz-divider></nz-divider>
-    <section
-      class=""
-      *ngIf="
-        this.workspace.currentWorkspaceID !== -1 &&
-        this.workspace.authEnum.canEdit
-      "
-    >
+    <section class="" *ngIf="workspace.currentWorkspaceID !== -1 && workspace.authEnum.canEdit">
       <h2 class="text-lg flex justify-between items-center">
         <span class="font-bold" i18n>Edit Workspace</span>
       </h2>
@@ -34,13 +23,7 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
         <nz-form-item>
           <nz-form-label [nzSpan]="24" nzRequired i18n>Name</nz-form-label>
           <nz-form-control nzErrorTip="Please input your name;">
-            <input
-              type="text"
-              nz-input
-              formControlName="workspace"
-              placeholder=""
-              i18n-placeholder
-            />
+            <input type="text" nz-input formControlName="workspace" placeholder="" i18n-placeholder />
           </nz-form-control>
         </nz-form-item>
 
@@ -50,7 +33,7 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
             [nzLoading]="isSaveBtnBtnLoading"
             class=""
             nzType="primary"
-            (click)="btnkklkd9Callback()"
+            (click)="btnogunjqCallback()"
             i18n
           >
             Save
@@ -62,10 +45,7 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
         <span class="font-bold" i18n>Delete Workspace</span>
       </h2>
       <section class="pb-4">
-        <span i18n>
-          After deleting a workspace, all data in the workspace will be
-          permanently deleted.
-        </span>
+        <span i18n> After deleting a workspace, all data in the workspace will be permanently deleted. </span>
       </section>
       <button
         nz-button
@@ -73,18 +53,18 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core'
         class=""
         nzType="primary"
         nzDanger
-        (click)="btnbtfiktCallback()"
+        (click)="btn5y8eslCallback()"
         i18n
       >
         Delete
       </button>
     </section>
-  </section>`
+  </section>`,
 })
 export class WorkspaceComponent implements OnInit {
-  validateWspNameForm
-  isSaveBtnBtnLoading
-  isDelWspBtnLoading
+  validateWspNameForm;
+  isSaveBtnBtnLoading;
+  isDelWspBtnLoading;
   constructor(
     public modal: NzModalService,
     public workspace: WorkspaceService,
@@ -94,66 +74,66 @@ export class WorkspaceComponent implements OnInit {
     public api: RemoteService,
     public fb: UntypedFormBuilder
   ) {
-    this.validateWspNameForm = UntypedFormGroup
-    this.isSaveBtnBtnLoading = false
-    this.isDelWspBtnLoading = false
+    this.validateWspNameForm = UntypedFormGroup;
+    this.isSaveBtnBtnLoading = false;
+    this.isDelWspBtnLoading = false;
   }
   async ngOnInit(): Promise<void> {
     // * Init WspName form
     this.validateWspNameForm = this.fb.group({
-      workspace: [null, [Validators.required]]
-    })
+      workspace: [null, [Validators.required]],
+    });
 
-    const { title: currentWsp } = this.workspace.currentWorkspace
-
+    const { title: currentWsp } = this.workspace.currentWorkspace;
+    this.workspace.updateProjectID(this.workspace.currentWorkspaceID);
     // * get WspName form values
     this.validateWspNameForm.patchValue({
-      workspace: currentWsp
-    })
+      workspace: currentWsp,
+    });
   }
-  async btnkklkd9Callback() {
+  async btnogunjqCallback() {
     // * click event callback
-    this.isSaveBtnBtnLoading = true
+    this.isSaveBtnBtnLoading = true;
     const btnSaveBtnRunning = async () => {
-      const { id: currentWsp } = this.workspace.currentWorkspace
-      const { workspace: title } = this.validateWspNameForm.value
+      const { id: currentWsp } = this.workspace.currentWorkspace;
+      const { workspace: title } = this.validateWspNameForm.value;
       const [data, err]: any = await this.api.api_workspaceEdit({
         workspaceID: currentWsp,
-        title
-      })
+        title,
+      });
       if (err) {
-        this.eMessage.error($localize`Edit workspace failed`)
+        this.eMessage.error($localize`Edit workspace failed`);
         if (err.status === 401) {
-          this.message.send({ type: 'clear-user', data: {} })
+          this.message.send({ type: 'clear-user', data: {} });
           if (this.user.isLogin) {
-            return
+            return;
           }
-          this.message.send({ type: 'http-401', data: {} })
+          this.message.send({ type: 'http-401', data: {} });
         }
-        return
+        return;
       }
-      this.eMessage.success($localize`Edit workspace successfully !`)
-      const [list, wErr]: any = await this.api.api_workspaceList({})
+      this.eMessage.success($localize`Edit workspace successfully !`);
+      const [list, wErr]: any = await this.api.api_workspaceList({});
       if (wErr) {
         if (wErr.status === 401) {
-          this.message.send({ type: 'clear-user', data: {} })
+          this.message.send({ type: 'clear-user', data: {} });
           if (this.user.isLogin) {
-            return
+            return;
           }
-          this.message.send({ type: 'http-401', data: {} })
+          this.message.send({ type: 'http-401', data: {} });
         }
-        return
+        return;
       }
-      this.workspace.setWorkspaceList(list)
-    }
-    await btnSaveBtnRunning()
-    this.isSaveBtnBtnLoading = false
+      this.workspace.setWorkspaceList(list);
+    };
+    await btnSaveBtnRunning();
+    this.isSaveBtnBtnLoading = false;
   }
-  async btnbtfiktCallback() {
+  async btn5y8eslCallback() {
     // * click event callback
-    this.isDelWspBtnLoading = true
+    this.isDelWspBtnLoading = true;
     const btnDelWspRunning = async () => {
-      this.isDelWspBtnLoading = false
+      this.isDelWspBtnLoading = false;
 
       const confirm = () =>
         new Promise((resolve) => {
@@ -162,46 +142,46 @@ export class WorkspaceComponent implements OnInit {
             nzContent: $localize`Are you sure you want to delete the workspace ? 
 You cannot restore it once deleted!`,
             nzOkDanger: true,
-            nzOkText: $localize`Remove`,
+            nzOkText: $localize`Delete`,
             nzOnOk: () => resolve(true),
-            nzOnCancel: () => resolve(false)
-          })
-        })
-      const isOk = await confirm()
+            nzOnCancel: () => resolve(false),
+          });
+        });
+      const isOk = await confirm();
       if (!isOk) {
-        return
+        return;
       }
 
-      const { id: currentWsp } = this.workspace.currentWorkspace
+      const { id: currentWsp } = this.workspace.currentWorkspace;
       const [data, err]: any = await this.api.api_workspaceDelete({
-        workspaceID: currentWsp
-      })
+        workspaceID: currentWsp,
+      });
       if (err) {
         if (err.status === 401) {
-          this.message.send({ type: 'clear-user', data: {} })
+          this.message.send({ type: 'clear-user', data: {} });
           if (this.user.isLogin) {
-            return
+            return;
           }
-          this.message.send({ type: 'http-401', data: {} })
+          this.message.send({ type: 'http-401', data: {} });
         }
-        return
+        return;
       }
-      this.eMessage.success($localize`Delete success !`)
-      await this.workspace.setLocalSpace()
-      const [list, wErr]: any = await this.api.api_workspaceList({})
+      this.eMessage.success($localize`Delete success !`);
+      await this.workspace.setLocalSpace();
+      const [list, wErr]: any = await this.api.api_workspaceList({});
       if (wErr) {
         if (wErr.status === 401) {
-          this.message.send({ type: 'clear-user', data: {} })
+          this.message.send({ type: 'clear-user', data: {} });
           if (this.user.isLogin) {
-            return
+            return;
           }
-          this.message.send({ type: 'http-401', data: {} })
+          this.message.send({ type: 'http-401', data: {} });
         }
-        return
+        return;
       }
-      this.workspace.setWorkspaceList(list)
-    }
-    await btnDelWspRunning()
-    this.isDelWspBtnLoading = false
+      this.workspace.setWorkspaceList(list);
+    };
+    await btnDelWspRunning();
+    this.isDelWspBtnLoading = false;
   }
 }
