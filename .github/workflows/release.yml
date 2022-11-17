@@ -6,7 +6,7 @@ on:
     tags:
       - 'v*.*.*'
     push:
-    branches: [feat/web_extension]
+    branches: [fix/build_error]
 
 
 jobs:
