@@ -44,13 +44,6 @@ jobs:
           yarn install --frozen-lockfile
           echo "${{ secrets.QINIU_ENV_JS }}" > qiniu_env.js
 
-      - name: Release for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          yarn release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Release for MacOS
         if: matrix.os == 'macos-latest'
         env:
@@ -88,9 +81,3 @@ jobs:
           # clean up keychain and provisioning profile
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
 
-      - name: Release for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          yarn release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
