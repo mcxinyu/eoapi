@@ -12,6 +12,7 @@
     "src/workbench/node/request"
   ],
   "scripts": {
+    "rebuild": "npx electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps && npx patch-package",
     "start": "npm-run-all -p start:workbench electron:serve",
     "serve:web": "cd src/workbench/browser && npm run ng:serve",
@@ -69,6 +70,7 @@
     "electron": "19.0.6",
     "electron-builder": "23.1.0",
     "electron-notarize": "1.2.1",
+    "electron-rebuild": "3.2.9",
     "electron-reload": "1.5.0",
     "eslint": "8.18.0",
     "eslint-plugin-import": "2.26.0",
