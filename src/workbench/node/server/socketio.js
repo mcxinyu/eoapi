@@ -1,6 +1,6 @@
 const IO = require('socket.io');
 const WebSocket = require('ws');
-// const grpcClient = require('./grpc_client.js');
+const grpcClient = require('./grpc_client.js');
 
 process.on('uncaughtException', (err) => {
   console.error('uncaughtException', err);

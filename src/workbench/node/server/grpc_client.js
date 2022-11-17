@@ -1,4 +1,4 @@
-// const grpc = require('@grpc/grpc-js');
+const grpc = require('@grpc/grpc-js');
 // const protoLoader = require('@grpc/proto-loader');
 // const fs = require('fs');
 // const path = require('path');
