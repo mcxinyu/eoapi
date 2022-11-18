@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, macos-12, ubuntu-latest]
 
     steps:
       - name: Check out git repository
@@ -45,7 +45,7 @@ jobs:
           echo "${{ secrets.QINIU_ENV_JS }}" > qiniu_env.js
 
       - name: Release for MacOS
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-12'
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
