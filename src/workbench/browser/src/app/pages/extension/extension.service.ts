@@ -30,7 +30,7 @@ export class ExtensionService {
   }
   private getExtensions() {
     if (this.electron.isElectron) {
-      return window.eo?.getModules() || new Map();
+      return window.eo?.getModules?.() || new Map();
     } else {
       const webeExts = this.webExtensionService.installedList.map((n) => [n.name, n.pkgInfo]);
       return new Map(webeExts as any);
@@ -50,7 +50,12 @@ export class ExtensionService {
     result.data = [
       ...result.data.filter((val) => installList.every((childVal) => childVal.name !== val.name)),
       //Local debug package
-      ...installList,
+      ...installList.map((module) => {
+        if (installList.find((it) => it.name === module.name)) {
+          module.i18n = result.data.find((it) => it.name === module.name)?.i18n;
+        }
+        return module;
+      }),
     ];
     result.data = result.data.map((module) => this.translateModule(module));
     return result;

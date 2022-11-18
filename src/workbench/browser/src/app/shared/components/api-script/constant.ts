@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor';
+import { languages } from 'monaco-editor/esm/vs/editor/editor.api';
 
 export type Note = {
   code?: string;
@@ -87,8 +87,8 @@ const generateEoExcuteSnippet = (bodyType) => {
   };
   const result = `//${localizes.apidefind}
   var ${variables.id}_api_demo_1 = {
-      "url": "https://api.eolink.com", //${localizes.url}
-      "name": "${variables.name} API Demo", //${localizes.name}
+    "url": "https://www.eoapi.io", //${localizes.url}
+    "name": "${variables.name} API Demo", //${localizes.name}
       "method": "POST",
       "headers": {
           "Content-Type": "${variables.contentType}"
@@ -748,7 +748,7 @@ export const beforeScriptCompletions: any[] = BEFORE_DATA.flatMap((n) => n.child
     prev.push({
       label: caption,
       insertText: value,
-      kind: monaco.languages.CompletionItemKind.Function,
+      kind: languages.CompletionItemKind.Function,
     });
   }
   return prev;
@@ -759,7 +759,7 @@ export const afterScriptCompletions: Completion[] = AFTER_DATA.flatMap((n) => n.
     prev.push({
       label: caption,
       insertText: value,
-      kind: monaco.languages.CompletionItemKind.Function,
+      kind: languages.CompletionItemKind.Function,
     });
   }
   return prev;

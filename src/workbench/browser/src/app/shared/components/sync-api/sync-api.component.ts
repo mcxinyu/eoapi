@@ -5,6 +5,7 @@ import packageJson from '../../../../../../../../package.json';
 import { FeatureInfo } from 'eo/platform/node/extension-manager/types';
 import { ExtensionService } from 'eo/workbench/browser/src/app/pages/extension/extension.service';
 import { WebExtensionService } from 'eo/workbench/browser/src/app/shared/services/web-extension/webExtension.service';
+import { SettingService } from 'eo/workbench/browser/src/app/core/services/settings/settings.service';
 
 @Component({
   selector: 'eo-sync-api',
@@ -18,12 +19,13 @@ export class SyncApiComponent implements OnInit {
   constructor(
     private storage: StorageService,
     public extensionService: ExtensionService,
-    public webExtensionService: WebExtensionService
+    public webExtensionService: WebExtensionService,
+    private settingService: SettingService
   ) {}
 
   ngOnInit(): void {
     this.featureMap?.forEach((data: FeatureInfo, key: string) => {
-      if (this.extensionService.isEnable(data.extensionID)) {
+      if (this.webExtensionService.isEnable(key)) {
         this.supportList.push({
           key,
           ...data,
@@ -35,14 +37,11 @@ export class SyncApiComponent implements OnInit {
       this.currentExtension = key || '';
     }
   }
-  async submit() {
+  async submit(callback) {
     const feature = this.featureMap.get(this.currentExtension);
     const action = feature.action || null;
-    const module = window.eo.loadFeatureModule(this.currentExtension) || globalThis[this.currentExtension];
-    // TODO 临时取值方式需要修改
-    const { token: secretKey, projectId } = window.eo?.getExtensionSettings(
-      'eoapi-feature-push-eolink.eolink.remoteServer'
-    );
+    const module = window.eo.loadFeatureModule(this.currentExtension);
+    const { token: secretKey, projectId } = this.settingService.getConfiguration(this.currentExtension);
     if (module && module[action] && typeof module[action] === 'function') {
       this.storage.run('projectExport', [], async (result: StorageRes) => {
         if (result.status === StorageResStatus.success) {
@@ -52,8 +51,10 @@ export class SyncApiComponent implements OnInit {
               projectId,
               secretKey,
             });
+            callback(true);
           } catch (e) {
             console.log(e);
+            callback(false);
           }
         }
       });
